@@ -54,7 +54,6 @@ class Test extends FunSuite with BeforeAndAfter {
     spark.read.parquet("src/test/resources/sample_output/employee.parquet"),"SourceParquetFileTest")
   test(testSourceFile("avro","src/test/resources/sample_data/emp.avro"),
     spark.read.parquet("src/test/resources/sample_output/employee.parquet"),"SourceAvroFileTest")
-  moviesDf.printSchema()
   repartitionAndColaeseTest(moviesDf)
   aliasTest(moviesDf)
   cacheTest(moviesDf)
@@ -192,6 +191,13 @@ class Test extends FunSuite with BeforeAndAfter {
 
     test(testDF, testDropcompare, "Testing Drop")
 
+  }
+
+  def testingWhere(movieDf: DataFrame): Unit = {
+
+    movieDf.createTempView("Test_Where")
+
+    val testDF: DataFrame = almaren.builder.sourceSql("select title,year from Test_drop").where(year > 1990)
   }
 
 
