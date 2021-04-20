@@ -182,9 +182,9 @@ class Test extends FunSuite with BeforeAndAfter {
     }
   }
 
-  def testingDrop(moviesD: DataFrame): Unit = {
+  def testingDrop(moviesDf: DataFrame): Unit = {
 
-    moviesD.createTempView("Test_drop")
+    moviesDf.createTempView("Test_drop")
 
     val testDF: DataFrame = almaren.builder.sourceSql("select title,year from Test_drop").drop("title").batch
     val testDropcompare = almaren.builder.sourceSql("select year from Test_drop").batch
