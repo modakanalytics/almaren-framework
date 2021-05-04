@@ -22,6 +22,7 @@ class Test extends FunSuite with BeforeAndAfter {
 
   import spark.implicits._
 
+
   createSampleData(testTable)
 
   // TODO improve it
@@ -57,6 +58,10 @@ class Test extends FunSuite with BeforeAndAfter {
   aliasTest(moviesDf)
   cacheTest(moviesDf)
   testingPipe(moviesDf)
+  testingWhere(moviesDf)
+  testingDrop(moviesDf)
+  testingSqlExpr()
+  testingSourceDataFrame()
   deserializerJsonTest()
   deserializerXmlTest()
   deserializerAvroTest()
@@ -178,8 +183,54 @@ class Test extends FunSuite with BeforeAndAfter {
       assert(aliasTableCount > 0)
     }
   }
+  def testingDrop(moviesDf: DataFrame): Unit = {
 
-  def cacheTest(df: DataFrame): Unit = {
+    moviesDf.createTempView("Test_drop")
+
+    val testDF: DataFrame = almaren.builder.sourceSql("select title,year from Test_drop").drop("title").batch
+    val testDropcompare = almaren.builder.sourceSql("select year from Test_drop").batch
+
+    test(testDF, testDropcompare, "Testing Drop")
+
+  }
+  def testingWhere(moviesDf: DataFrame): Unit = {
+
+    moviesDf.createTempView("Test_where")
+
+    val testDF: DataFrame = almaren.builder.sourceSql("select year from Test_where").where("year = 1990").batch
+    val testWherecompare = almaren.builder.sourceSql("select year from Test_where WHERE year = '1990'").batch
+
+
+    test(testDF, testWherecompare, "Testing Where")
+  }
+  def testingSqlExpr(): Unit = {
+
+    val df = Seq(
+      ("John", "Smith", "London", 55.3),
+      ("David", "Jones", "India", 62.5),
+      ("Michael", "Johnson", "Indonesia", 68.2),
+      ("Chris", "Lee", "Brazil", 53.4),
+      ("Mike", "Brown", "Russia", 65.6)
+    ).toDF("first_name", "last_name", "country", "salary")
+    df.createOrReplaceTempView("person_info")
+
+
+    val testDF  = almaren.builder.sourceSql("select CAST (salary as INT) from person_info" ).batch
+    val testSqlExprcompare = almaren.builder.sourceSql("select * from person_info").sqlExpr("CAST(salary as int)").batch
+    test(testDF, testSqlExprcompare, "Testing sqlExpr")
+ }
+  def testingSourceDataFrame(): Unit = {
+
+    val testDS = spark.range(3)
+    val testCompareDf = spark.range(3).toDF
+    val testDF = almaren.builder.sourceDataFrame(testDS).batch
+
+    test(testDF, testCompareDf, "Testing SourceDF")
+  }
+
+
+
+    def cacheTest(df: DataFrame): Unit = {
 
     df.createTempView("cache_test")
 
